@@ -1,0 +1,25 @@
+{
+  "name": "plateforme-location-automobile",
+  "version": "1.0.0",
+  "description": "Plateforme de location automobile - Architecture microservices",
+  "private": true,
+  "workspaces": [
+    "backend/*",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=backend/auth-user-service\" \"npm run dev --workspace=backend/agency-fleet-service\" \"npm run dev --workspace=backend/search-availability-service\" \"npm run dev --workspace=backend/reservation-service\" \"npm run dev --workspace=backend/payment-billing-service\" \"npm run dev --workspace=backend/review-support-service\" \"npm run dev --workspace=frontend\"",
+    "build": "npm run build --workspaces",
+    "test": "npm test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "docker:up": "cd docker && docker-compose up -d",
+    "docker:down": "cd docker && docker-compose down",
+    "docker:build": "cd docker && docker-compose build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
