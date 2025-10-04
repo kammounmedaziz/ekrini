@@ -10,12 +10,12 @@
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm start",
-    "docker:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d",
-    "docker:build": "docker-compose build",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down",
-    "docker:logs": "docker-compose logs -f",
-    "docker:clean": "docker-compose down -v --remove-orphans"
+    "docker:dev": "cd docker && docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
+    "docker:build": "cd docker && docker-compose build",
+    "docker:up": "cd docker && docker-compose up -d",
+    "docker:down": "cd docker && docker-compose down",
+    "docker:logs": "cd docker && docker-compose logs -f",
+    "docker:clean": "cd docker && docker-compose down -v --rmi all"
   },
   "dependencies": {
     "mongodb": "^6.2.0",
