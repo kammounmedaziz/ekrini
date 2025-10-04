@@ -1,25 +1,35 @@
 {
-  "name": "plateforme-location-automobile",
+  "name": "car-rental-platform",
   "version": "1.0.0",
-  "description": "Plateforme de location automobile - Architecture microservices",
-  "private": true,
-  "workspaces": [
-    "backend/*",
-    "frontend"
-  ],
+  "description": "Car rental platform with microservices architecture",
+  "main": "index.js",
   "scripts": {
-    "dev": "concurrently \"npm run dev --workspace=backend/auth-user-service\" \"npm run dev --workspace=backend/agency-fleet-service\" \"npm run dev --workspace=backend/search-availability-service\" \"npm run dev --workspace=backend/reservation-service\" \"npm run dev --workspace=backend/payment-billing-service\" \"npm run dev --workspace=backend/review-support-service\" \"npm run dev --workspace=frontend\"",
-    "build": "npm run build --workspaces",
-    "test": "npm test --workspaces",
-    "lint": "npm run lint --workspaces",
-    "docker:up": "cd docker && docker-compose up -d",
-    "docker:down": "cd docker && docker-compose down",
-    "docker:build": "cd docker && docker-compose build"
+    "test-db": "node test-connection.js",
+    "setup": "npm install && npm run create-env",
+    "create-env": "node -e \"require('fs').copyFileSync('.env.example', '.env'); console.log('✅ .env file created from .env.example');\"",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm start",
+    "docker:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:clean": "docker-compose down -v --remove-orphans"
+  },
+  "dependencies": {
+    "mongodb": "^6.2.0",
+    "dotenv": "^16.3.1"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
   },
+  "workspaces": [
+    "backend/*",
+    "frontend"
+  ],
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
   }
 }

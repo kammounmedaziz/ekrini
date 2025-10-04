@@ -1,0 +1,163 @@
+version: '3.8'
+
+# Development overrides for docker-compose.yml
+# Use: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  # Development-specific MongoDB configuration
+  mongodb:
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: devpassword123
+    volumes:
+      - mongodb_dev_data:/data/db
+      - ../scripts/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    command: --bind_ip_all --logpath /var/log/mongodb/mongod.log --logappend
+
+  # Development Redis with persistence disabled for faster startup
+  redis:
+    command: redis-server --save "" --appendonly no
+
+  # Auth Service Development Configuration
+  auth-service:
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - MONGODB_URI=mongodb://admin:devpassword123@mongodb:27017/car_rental_platform?authSource=admin
+      - MONGODB_DB_NAME=car_rental_platform
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=dev-jwt-secret-key-change-in-production
+      - JWT_EXPIRES_IN=7d
+      - LOG_LEVEL=debug
+    volumes:
+      - ../backend/auth-user-service:/app
+      - ../backend/shared:/app/shared
+      - /app/node_modules
+    command: ["nodemon", "--inspect=0.0.0.0:9229", "src/app.js"]
+    ports:
+      - "3001:3001"
+      - "9229:9229" # Debug port
+
+  # Agency Service Development Configuration
+  agency-service:
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+      - MONGODB_URI=mongodb://admin:devpassword123@mongodb:27017/car_rental_platform?authSource=admin
+      - MONGODB_DB_NAME=car_rental_platform
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - LOG_LEVEL=debug
+    volumes:
+      - ../backend/agency-fleet-service:/app
+      - ../backend/shared:/app/shared
+      - /app/node_modules
+    command: ["nodemon", "--inspect=0.0.0.0:9230", "src/app.js"]
+    ports:
+      - "3002:3002"
+      - "9230:9230" # Debug port
+
+  # Search Service Development Configuration
+  search-service:
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+      - MONGODB_URI=mongodb://admin:devpassword123@mongodb:27017/car_rental_platform?authSource=admin
+      - MONGODB_DB_NAME=car_rental_platform
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - LOG_LEVEL=debug
+    volumes:
+      - ../backend/search-availability-service:/app
+      - ../backend/shared:/app/shared
+      - /app/node_modules
+    command: ["nodemon", "--inspect=0.0.0.0:9231", "src/app.js"]
+    ports:
+      - "3003:3003"
+      - "9231:9231" # Debug port
+
+  # Reservation Service Development Configuration
+  reservation-service:
+    environment:
+      - NODE_ENV=development
+      - PORT=3004
+      - MONGODB_URI=mongodb://admin:devpassword123@mongodb:27017/car_rental_platform?authSource=admin
+      - MONGODB_DB_NAME=car_rental_platform
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - LOG_LEVEL=debug
+    volumes:
+      - ../backend/reservation-service:/app
+      - ../backend/shared:/app/shared
+      - /app/node_modules
+    command: ["nodemon", "--inspect=0.0.0.0:9232", "src/app.js"]
+    ports:
+      - "3004:3004"
+      - "9232:9232" # Debug port
+
+  # Payment Service Development Configuration
+  payment-service:
+    environment:
+      - NODE_ENV=development
+      - PORT=3005
+      - MONGODB_URI=mongodb://admin:devpassword123@mongodb:27017/car_rental_platform?authSource=admin
+      - MONGODB_DB_NAME=car_rental_platform
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key_here
+      - PAYPAL_CLIENT_ID=your_paypal_client_id_here
+      - PAYPAL_CLIENT_SECRET=your_paypal_client_secret_here
+      - PAYPAL_MODE=sandbox
+      - LOG_LEVEL=debug
+    volumes:
+      - ../backend/payment-billing-service:/app
+      - ../backend/shared:/app/shared
+      - /app/node_modules
+    command: ["nodemon", "--inspect=0.0.0.0:9233", "src/app.js"]
+    ports:
+      - "3005:3005"
+      - "9233:9233" # Debug port
+
+  # Review Service Development Configuration
+  review-service:
+    environment:
+      - NODE_ENV=development
+      - PORT=3006
+      - MONGODB_URI=mongodb://admin:devpassword123@mongodb:27017/car_rental_platform?authSource=admin
+      - MONGODB_DB_NAME=car_rental_platform
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - LOG_LEVEL=debug
+    volumes:
+      - ../backend/review-support-service:/app
+      - ../backend/shared:/app/shared
+      - /app/node_modules
+    command: ["nodemon", "--inspect=0.0.0.0:9234", "src/app.js"]
+    ports:
+      - "3006:3006"
+      - "9234:9234" # Debug port
+
+  # Frontend Development Configuration
+  frontend:
+    environment:
+      - NODE_ENV=development
+      - REACT_APP_API_URL=http://localhost:3001
+      - REACT_APP_AUTH_SERVICE=http://localhost:3001
+      - REACT_APP_AGENCY_SERVICE=http://localhost:3002
+      - REACT_APP_SEARCH_SERVICE=http://localhost:3003
+      - REACT_APP_RESERVATION_SERVICE=http://localhost:3004
+      - REACT_APP_PAYMENT_SERVICE=http://localhost:3005
+      - REACT_APP_REVIEW_SERVICE=http://localhost:3006
+      - GENERATE_SOURCEMAP=true
+      - FAST_REFRESH=true
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    command: ["npm", "start"]
+    stdin_open: true
+    tty: true
+
+volumes:
+  mongodb_dev_data:
+    driver: local

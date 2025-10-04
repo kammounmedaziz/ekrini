@@ -1,78 +1,227 @@
 version: '3.8'
+
 services:
-  auth-user-service:
-    build: ../backend/auth-user-service
-    env_file:
-      - ../.env.example
-    ports:
-      - "4001:4001"
-    depends_on:
-      - mongo
-  agency-fleet-service:
-    build: ../backend/agency-fleet-service
-    env_file:
-      - ../.env.example
-    ports:
-      - "4002:4002"
-    depends_on:
-      - mongo
-  search-availability-service:
-    build: ../backend/search-availability-service
-    env_file:
-      - ../.env.example
-    ports:
-      - "4003:4003"
-    depends_on:
-      - mongo
-      - redis
-      - elasticsearch
-  reservation-service:
-    build: ../backend/reservation-service
-    env_file:
-      - ../.env.example
-    ports:
-      - "4004:4004"
-    depends_on:
-      - mongo
-  payment-billing-service:
-    build: ../backend/payment-billing-service
-    env_file:
-      - ../.env.example
-    ports:
-      - "4005:4005"
-    depends_on:
-      - mongo
-  review-support-service:
-    build: ../backend/review-support-service
-    env_file:
-      - ../.env.example
-    ports:
-      - "4006:4006"
-    depends_on:
-      - mongo
-  frontend:
-    build: ../frontend
-    ports:
-      - "3000:3000"
-  mongo:
-    image: mongo:6
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: car-rental-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: car_rental_platform
     ports:
       - "27017:27017"
     volumes:
-      - mongo_data:/data/db
+      - mongodb_data:/data/db
+      - ../scripts/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - car-rental-network
+
+  # Redis Cache
   redis:
-    image: redis:7
+    image: redis:7-alpine
+    container_name: car-rental-redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.2
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-    ports:
-      - "9200:9200"
     volumes:
-      - esdata:/usr/share/elasticsearch/data
+      - redis_data:/data
+    networks:
+      - car-rental-network
+
+  # Auth & User Service
+  auth-service:
+    build:
+      context: ..
+      dockerfile: backend/auth-user-service/Dockerfile
+      target: dev
+    container_name: auth-service
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/car_rental_platform?authSource=admin
+      - MONGODB_DB_NAME=car_rental_platform
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+      - "3001:3001"
+    volumes:
+      - ../backend/auth-user-service:/app
+      - /app/node_modules
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - car-rental-network
+
+  # Agency & Fleet Service
+  agency-service:
+    build:
+      context: ..
+      dockerfile: backend/agency-fleet-service/Dockerfile
+      target: dev
+    container_name: agency-service
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/car_rental_platform?authSource=admin
+      - MONGODB_DB_NAME=car_rental_platform
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+      - "3002:3002"
+    volumes:
+      - ../backend/agency-fleet-service:/app
+      - /app/node_modules
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - car-rental-network
+
+  # Search & Availability Service
+  search-service:
+    build:
+      context: ..
+      dockerfile: backend/search-availability-service/Dockerfile
+      target: dev
+    container_name: search-service
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/car_rental_platform?authSource=admin
+      - MONGODB_DB_NAME=car_rental_platform
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+      - "3003:3003"
+    volumes:
+      - ../backend/search-availability-service:/app
+      - /app/node_modules
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - car-rental-network
+
+  # Reservation Service
+  reservation-service:
+    build:
+      context: ..
+      dockerfile: backend/reservation-service/Dockerfile
+      target: dev
+    container_name: reservation-service
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - PORT=3004
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/car_rental_platform?authSource=admin
+      - MONGODB_DB_NAME=car_rental_platform
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+      - "3004:3004"
+    volumes:
+      - ../backend/reservation-service:/app
+      - /app/node_modules
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - car-rental-network
+
+  # Payment & Billing Service
+  payment-service:
+    build:
+      context: ..
+      dockerfile: backend/payment-billing-service/Dockerfile
+      target: dev
+    container_name: payment-service
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - PORT=3005
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/car_rental_platform?authSource=admin
+      - MONGODB_DB_NAME=car_rental_platform
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+      - "3005:3005"
+    volumes:
+      - ../backend/payment-billing-service:/app
+      - /app/node_modules
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - car-rental-network
+
+  # Review & Support Service
+  review-service:
+    build:
+      context: ..
+      dockerfile: backend/review-support-service/Dockerfile
+      target: dev
+    container_name: review-service
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - PORT=3006
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/car_rental_platform?authSource=admin
+      - MONGODB_DB_NAME=car_rental_platform
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+      - "3006:3006"
+    volumes:
+      - ../backend/review-support-service:/app
+      - /app/node_modules
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - car-rental-network
+
+  # Frontend React App
+  frontend:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+      target: dev
+    container_name: car-rental-frontend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - REACT_APP_API_URL=http://localhost:3001
+      - REACT_APP_AUTH_SERVICE=http://localhost:3001
+      - REACT_APP_AGENCY_SERVICE=http://localhost:3002
+      - REACT_APP_SEARCH_SERVICE=http://localhost:3003
+      - REACT_APP_RESERVATION_SERVICE=http://localhost:3004
+      - REACT_APP_PAYMENT_SERVICE=http://localhost:3005
+      - REACT_APP_REVIEW_SERVICE=http://localhost:3006
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    depends_on:
+      - auth-service
+      - agency-service
+      - search-service
+      - reservation-service
+      - payment-service
+      - review-service
+    networks:
+      - car-rental-network
+
 volumes:
-  mongo_data:
-  esdata:
+  mongodb_data:
+  redis_data:
+
+networks:
+  car-rental-network:
+    driver: bridge
