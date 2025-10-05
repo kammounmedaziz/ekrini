@@ -38,8 +38,8 @@ WORKDIR /usr/share/nginx/html
 # Remove default nginx static assets
 RUN rm -rf ./*
 
-# Copy built assets from build stage
-COPY --from=build /app/build .
+# Copy built assets from build stage (Vite outputs to /app/dist)
+COPY --from=build /app/dist .
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
